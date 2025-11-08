@@ -125,18 +125,18 @@ def create_schema():
                     fact_id SERIAL PRIMARY KEY,
                     
                     -- foreign keys
-                    sk_student INT REFERENCES dim_student (sk_student),
-                    sk_date INT REFERENCES dim_date (sk_date),
-                    sk_subject INT REFERENCES dim_subject (sk_subject),
-                    sk_stage INT REFERENCES dim_stage (sk_stage),
-                    sk_status INT REFERENCES dim_status (sk_status),
-                    sk_grade INT REFERENCES dim_grade (sk_grade),
-                    sk_advanced INT REFERENCES dim_advanced (sk_advanced),           
-                    sk_scholarship INT REFERENCES dim_scholarship (sk_scholarship),
+                    sk_student INT NOT NULL REFERENCES dim_student (sk_student),
+                    sk_date INT NOT NULL REFERENCES dim_date (sk_date),
+                    sk_subject INT NOT NULL REFERENCES dim_subject (sk_subject),
+                    sk_stage INT NOT NULL REFERENCES dim_stage (sk_stage),
+                    sk_status INT NOT NULL REFERENCES dim_status (sk_status),
+                    sk_grade INT NOT NULL REFERENCES dim_grade (sk_grade),
+                    sk_advanced INT NOT NULL REFERENCES dim_advanced (sk_advanced),           
+                    sk_scholarship INT NOT NULL REFERENCES dim_scholarship (sk_scholarship),
                     
                     -- measurements
-                    current_lesson INT,
-                    total_sheets INT,
+                    current_lesson INT NOT NULL,
+                    total_sheets INT NOT NULL,
 
                     -- constraint
                     UNIQUE(sk_student, sk_date, sk_subject)                     
