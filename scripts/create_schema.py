@@ -110,7 +110,7 @@ def create_schema():
             """
                 CREATE TABLE dim_stage (
                 sk_stage SERIAL PRIMARY KEY,
-                stage_id INT UNIQUE NOT NULL,
+                stage_id VARCHAR(3) UNIQUE NOT NULL,
                 stage_name VARCHAR(3) NOT NULL,
                 sk_subject INT REFERENCES dim_subject(sk_subject) NOT NULL,
                 UNIQUE(stage_id, sk_subject) -- stage B in math is different from stage B in japanese
