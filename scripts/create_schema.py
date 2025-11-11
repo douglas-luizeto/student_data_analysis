@@ -41,7 +41,7 @@ def create_schema():
             """
                 CREATE TABLE dim_date (
                     sk_date SERIAL PRIMARY KEY,
-                    date_id INT UNIQUE NOT NULL,
+                    date_id VARCHAR(6) UNIQUE NOT NULL,
                     year INT NOT NULL,
                     month INT NOT NULL
                 );
