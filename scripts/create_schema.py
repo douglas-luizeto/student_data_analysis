@@ -99,7 +99,7 @@ def create_schema():
             """
                 CREATE TABLE dim_student (
                     sk_student SERIAL PRIMARY KEY, 
-                    student_id INT UNIQUE NOT NULL,
+                    student_id VARCHAR(13) UNIQUE NOT NULL,
                     full_name VARCHAR(255),
                     date_of_birth DATE NOT NULL
                 );
