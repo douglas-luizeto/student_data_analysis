@@ -1,5 +1,7 @@
 import psycopg2
 import sys
+from dotenv import load_dotenv
+import os
 
 
 def create_schema():
@@ -7,14 +9,21 @@ def create_schema():
     conn = None
     cur = None
 
+    load_dotenv()
+    DB_HOST = os.getenv("DB_HOST")
+    DB_NAME = os.getenv("DB_NAME")
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_PORT = os.getenv("DB_PORT")
+
     try:
         # database connection
         conn = psycopg2.connect(
-            host="localhost",
-            database="student_analysis",
-            user="postgres",
-            password="cherantoine",
-            port=5432,
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=DB_PORT,
         )
 
         cur = conn.cursor()
