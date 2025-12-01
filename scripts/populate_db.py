@@ -9,7 +9,7 @@ import os
 script_path = Path(__file__)
 script_dir = script_path.parent
 base_dir = script_dir.parent
-fact_data_path = base_dir / "student_data.csv"
+fact_data_path = base_dir / "student_data-updated.csv"
 stage_data_path = base_dir / "stage_data.csv"
 
 # Converted to a list for reuse
@@ -97,6 +97,18 @@ try:
         """
     )
 
+    # Populate dim_studytype
+
+    cur.execute(
+        """
+            INSERT INTO dim_studytype (type_flag, type_description)
+            VALUES
+                (0, 'paper'),
+                (1, 'connect')
+            ON CONFLICT DO NOTHING;
+        """
+    )
+
     # Populate dim_status
     cur.execute(
         """
@@ -176,7 +188,12 @@ try:
 
     # Collect unique student values
     unique_dim_student = {
-        (fact["student_id"], fact["full_name"], format_date(fact["date_of_birth"]))
+        (
+            fact["student_id"],
+            fact["full_name"],
+            format_date(fact["date_of_birth"]),
+            fact["gender"][0],
+        )
         for fact in fact_list
         if fact["student_id"]
     }
@@ -184,8 +201,8 @@ try:
     data_dim_student = list(unique_dim_student)
 
     sql_dim_student = """
-                        INSERT INTO dim_student (student_id, full_name, date_of_birth)
-                        VALUES (%s, %s, %s)
+                        INSERT INTO dim_student (student_id, full_name, date_of_birth, gender)
+                        VALUES (%s, %s, %s, %s)
                         ON CONFLICT DO NOTHING;
                       """
 
@@ -248,6 +265,13 @@ try:
     )
     student_sk = {id: sk for id, sk in cur.fetchall()}
 
+    cur.execute(
+        """
+            SELECT type_description, sk_studytype FROM dim_studytype;
+        """
+    )
+    studytype_sk = {type: sk for type, sk in cur.fetchall()}
+
     # Populate fact table
 
     data_fact_table = [
@@ -258,6 +282,7 @@ try:
             stage_sk[fact["stage_id"]],
             status_sk[fact["status"]],
             grade_sk[fact["grade_id"]],
+            studytype_sk[fact["type"]],
             advanced_sk[int(fact["advanced"])],
             scholarship_sk[int(fact["scholarship"])],
             fact["current_lesson"],
@@ -272,12 +297,13 @@ try:
                                                                       sk_subject, 
                                                                       sk_stage, 
                                                                       sk_status, 
-                                                                      sk_grade, 
+                                                                      sk_grade,
+                                                                      sk_studytype,
                                                                       sk_advanced, 
                                                                       sk_scholarship,
                                                                       current_lesson,
                                                                       total_sheets)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
                         ON CONFLICT DO NOTHING;
                      """
     cur.executemany(sql_fact_table, data_fact_table)

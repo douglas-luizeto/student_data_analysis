@@ -42,6 +42,7 @@ def create_schema():
         cur.execute("DROP TABLE IF EXISTS dim_grade CASCADE;")
         cur.execute("DROP TABLE IF EXISTS dim_advanced CASCADE;")
         cur.execute("DROP TABLE IF EXISTS dim_scholarship CASCADE;")
+        cur.execute("DROP TABLE IF EXISTS dim_studytype CASCADE;")
 
         conn.commit()
 
@@ -106,11 +107,22 @@ def create_schema():
 
         cur.execute(
             """
+                CREATE TABLE dim_studytype (
+                    sk_studytype SERIAL PRIMARY KEY,
+                    type_flag INT UNIQUE NOT NULL,
+                    type_description VARCHAR(15) NOT NULL
+                ); 
+            """
+        )
+
+        cur.execute(
+            """
                 CREATE TABLE dim_student (
                     sk_student SERIAL PRIMARY KEY, 
                     student_id VARCHAR(13) UNIQUE NOT NULL,
                     full_name VARCHAR(255),
-                    date_of_birth DATE NOT NULL
+                    date_of_birth DATE NOT NULL,
+                    gender CHAR
                 );
             """
         )
@@ -140,6 +152,7 @@ def create_schema():
                     sk_stage INT NOT NULL REFERENCES dim_stage (sk_stage),
                     sk_status INT NOT NULL REFERENCES dim_status (sk_status),
                     sk_grade INT NOT NULL REFERENCES dim_grade (sk_grade),
+                    sk_studytype INT NOT NULL REFERENCES dim_studytype (sk_studytype),
                     sk_advanced INT NOT NULL REFERENCES dim_advanced (sk_advanced),           
                     sk_scholarship INT NOT NULL REFERENCES dim_scholarship (sk_scholarship),
                     
