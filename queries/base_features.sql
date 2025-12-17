@@ -2,18 +2,39 @@ WITH stage_lengths as (
 	SELECT
 		sk_subject,
 		max(substr(stage_id, 2)::int)*20 as max_progress_point
-	FROM 
-		dim_stage
+	FROM dim_stage
 	GROUP BY 1	
+),
+
+calculated_ages as (
+	SELECT
+		fact_id
+		, date_id
+		, year
+		, month
+		, date_of_birth
+		, date_part('year', age(concat(year, '-', month, '-', 20)::date, date_of_birth))::int as age_at_report
+	FROM fact_student_monthly_performance f
+	JOIN dim_student ds on ds.sk_student = f.sk_student
+	JOIN dim_date dd on dd.sk_date = f.sk_date
 )
 
 SELECT
-	fact_id
-	, year
-	, month
+	f.fact_id
+	, dd.date_id
+	, dd.year
+	, dd.month
 	, student_id
 	, full_name
-	, date_of_birth
+	, ds.date_of_birth
+	, age_at_report
+	, case 
+		when age_at_report < 7 then 'early childhood'
+		when age_at_report between 7 and 14 then 'school age'
+		when age_at_report between 15 and 18 then 'teenager'
+		when age_at_report between 18 and 25 then 'young adult'
+		when age_at_report > 25 then 'adult'
+	  end as life_stage		
 	, gender
 	, subject
 	, stage_id
@@ -27,7 +48,7 @@ SELECT
 	
 	-- Average number of sheets for the last 3 months
 	, round(avg(total_sheets) over (partition by student_id
-									order by year, month
+									order by dd.year, dd.month
 							  	    rows between 2 preceding and current row)) as avg_total_sheets_3
 
 	-- Global block number							  
@@ -54,5 +75,6 @@ JOIN dim_scholarship dsc on dsc.sk_scholarship = f.sk_scholarship
 JOIN dim_status dstat on dstat.sk_status = f.sk_status
 
 JOIN stage_lengths sl on f.sk_subject = sl.sk_subject
+JOIN calculated_ages ca on f.fact_id = ca.fact_id
 
 ORDER BY fact_id;
