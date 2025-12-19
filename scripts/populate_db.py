@@ -147,12 +147,17 @@ try:
     subject_sk = {name: sk for name, sk in cur.fetchall()}
 
     data_dim_stage = [
-        (stage["stage_id"], stage["stage_name"], subject_sk[stage["subject"]])
+        (
+            stage["stage_id"],
+            stage["stage_grade"],
+            stage["stage_name"],
+            subject_sk[stage["subject"]],
+        )
         for stage in stage_list
     ]
     sql_dim_stage = """
-                        INSERT INTO dim_stage (stage_id, stage_name, sk_subject)
-                        VALUES (%s, %s, %s)
+                        INSERT INTO dim_stage (stage_id, stage_grade, stage_name, sk_subject)
+                        VALUES (%s, %s, %s, %s)
                         ON CONFLICT DO NOTHING;
                     """
     if data_dim_stage:

@@ -1,4 +1,5 @@
-WITH stage_lengths as (
+WITH 
+stage_lengths as (
 	SELECT
 		sk_subject,
 		max(substr(stage_id, 2)::int)*20 as max_progress_point
@@ -61,25 +62,34 @@ SELECT
 	, trim(leading 'mpij' from stage_id)::int as stage_number
 	, stage_name
 	, grade_name
+	
+-- Measurements
+
 	, current_lesson
 	, total_sheets
 	
-	-- Average number of sheets for the last 3 months
-	, round(avg(total_sheets) over (partition by ds.student_id
-									order by dd.year, dd.month
-							  	    rows between 2 preceding and current row)) as avg_total_sheets_3
-
-	-- Real progress comparing with the previous month 
+	-- How many stages until advanced 
 	, case 
-		when lesson_delta <= 0 then 1 
-		else 0
-	  end as is_stalled
-
+		when dsub.subject = 'japanese' then null
+	    else grade_id::int - stage_grade
+	  end as stages_to_adv
+	
 	-- Global block number							  
 	, (((substr(stage_id, 2)::int-1)*200 + current_lesson)/10) as progress_point
 	
 	-- Course completion %
     , round((((substr(stage_id, 2)::int-1)*200 + current_lesson)/10 ) / max_progress_point::decimal * 100, 2) as progress_pct
+
+	-- Average number of sheets for the last 3 months
+	, round(avg(total_sheets) over (partition by ds.student_id, dsub.subject
+									order by dd.year, dd.month
+							  	    rows between 3 preceding and 1 preceding)) as avg_total_sheets_3
+
+	-- Real progress comparing with the previous month (binary)
+	, case 
+		when lesson_delta <= 0 then 1 
+		else 0
+	  end as is_stalled
 
 	-- Target
 	, status_name
