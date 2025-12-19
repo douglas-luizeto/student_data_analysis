@@ -4,12 +4,11 @@ WITH stage_lengths as (
 		max(substr(stage_id, 2)::int)*20 as max_progress_point
 	FROM dim_stage
 	GROUP BY 1	
-),
+)
 
-calculated_ages as (
+, calculated_ages as (
 	SELECT
 		fact_id
-		, date_id
 		, year
 		, month
 		, date_of_birth
@@ -19,12 +18,31 @@ calculated_ages as (
 	JOIN dim_date dd on dd.sk_date = f.sk_date
 )
 
+, lesson_differences as (
+	SELECT
+		f.fact_id
+		, year
+		, month
+		, student_id
+		, subject
+		, 200* trim(leading 'mpij' from stage_id)::int - 
+	      200* (lag(trim(leading 'mpij' from stage_id)::int, 1, 0)
+	            over (partition by student_id, subject order by year, month)) + 
+	      current_lesson - 
+	      (lag(current_lesson, 1, 0) over (partition by student_id, subject order by year, month)) as lesson_delta
+	FROM fact_student_monthly_performance f
+	JOIN dim_date dd on dd.sk_date = f.sk_date
+	JOIN dim_student ds on ds.sk_student = f.sk_student
+	JOIN dim_subject dsub on dsub.sk_subject = f.sk_subject
+	JOIN dim_stage dstg on dstg.sk_stage = f.sk_stage	
+)
+
 SELECT
 	f.fact_id
 	, dd.date_id
 	, dd.year
 	, dd.month
-	, student_id
+	, ds.student_id
 	, full_name
 	, ds.date_of_birth
 	, age_at_report
@@ -36,26 +54,26 @@ SELECT
 		when age_at_report > 25 then 'adult'
 	  end as life_stage		
 	, gender
-	, subject
-	, stage_id
-	, stage_name
-	, grade_name
 	, type_description
 	, advanced_flag
 	, scholarship_flag
+	, dsub.subject
+	, trim(leading 'mpij' from stage_id)::int as stage_number
+	, stage_name
+	, grade_name
 	, current_lesson
 	, total_sheets
 	
 	-- Average number of sheets for the last 3 months
-	, round(avg(total_sheets) over (partition by student_id
+	, round(avg(total_sheets) over (partition by ds.student_id
 									order by dd.year, dd.month
 							  	    rows between 2 preceding and current row)) as avg_total_sheets_3
 
-	-- Is stalled
+	-- Real progress comparing with the previous month 
 	, case 
-		when (current_lesson - lag(current_lesson) over (partition by student_id order by dd.year, dd.month)) <= 0 then 1 
+		when lesson_delta <= 0 then 1 
 		else 0
-	  end as stalled
+	  end as is_stalled
 
 	-- Global block number							  
 	, (((substr(stage_id, 2)::int-1)*200 + current_lesson)/10) as progress_point
@@ -80,7 +98,6 @@ JOIN dim_status dstat on dstat.sk_status = f.sk_status
 
 JOIN stage_lengths sl on f.sk_subject = sl.sk_subject
 JOIN calculated_ages ca on f.fact_id = ca.fact_id
-
-WHERE full_name = 'REBEKAH CÂNDIDO TESCH' and subject = 'math'
+JOIN lesson_differences ld on f.fact_id = ld.fact_id
 
 ORDER BY fact_id;
