@@ -78,8 +78,7 @@ SELECT
 	, advanced_flag
 	, scholarship_flag
 	, dsub.subject
-	, trim(leading 'mpij' from stage_id)::int as stage_number
-	, stage_name
+ 	, stage_name
 	, grade_name
 	
 -- Measurements
