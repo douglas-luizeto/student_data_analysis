@@ -51,14 +51,18 @@ SELECT
 									order by dd.year, dd.month
 							  	    rows between 2 preceding and current row)) as avg_total_sheets_3
 
+	-- Is stalled
+	, case 
+		when (current_lesson - lag(current_lesson) over (partition by student_id order by dd.year, dd.month)) <= 0 then 1 
+		else 0
+	  end as stalled
+
 	-- Global block number							  
 	, (((substr(stage_id, 2)::int-1)*200 + current_lesson)/10) as progress_point
 	
 	-- Course completion %
     , round((((substr(stage_id, 2)::int-1)*200 + current_lesson)/10 ) / max_progress_point::decimal * 100, 2) as progress_pct
 
-	-- Performance Index
-	
 	-- Target
 	, status_name
 	
@@ -76,5 +80,7 @@ JOIN dim_status dstat on dstat.sk_status = f.sk_status
 
 JOIN stage_lengths sl on f.sk_subject = sl.sk_subject
 JOIN calculated_ages ca on f.fact_id = ca.fact_id
+
+WHERE full_name = 'REBEKAH CÂNDIDO TESCH' and subject = 'math'
 
 ORDER BY fact_id;
