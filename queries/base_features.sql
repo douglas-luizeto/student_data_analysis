@@ -62,8 +62,17 @@ SELECT
 	, trim(leading 'mpij' from stage_id)::int as stage_number
 	, stage_name
 	, grade_name
+	
+-- Measurements
+
 	, current_lesson
 	, total_sheets
+	
+	-- How many stages until advanced 
+	, case 
+		when dsub.subject = 'japanese' then null
+	    else grade_id::int - stage_grade
+	  end as stages_to_adv
 	
 	-- Global block number							  
 	, (((substr(stage_id, 2)::int-1)*200 + current_lesson)/10) as progress_point
@@ -100,7 +109,5 @@ JOIN dim_status dstat on dstat.sk_status = f.sk_status
 JOIN stage_lengths sl on f.sk_subject = sl.sk_subject
 JOIN calculated_ages ca on f.fact_id = ca.fact_id
 JOIN lesson_differences ld on f.fact_id = ld.fact_id
-
-WHERE full_name = 'LIZ HERINGER SOUZA'
 
 ORDER BY fact_id;
