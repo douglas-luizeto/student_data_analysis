@@ -38,6 +38,25 @@ stage_lengths as (
 	JOIN dim_stage dstg on dstg.sk_stage = f.sk_stage	
 )
 
+, sheets_statistics as (
+	SELECT
+		f.fact_id
+		, year
+		, month
+		, student_id
+		, subject
+		, avg(total_sheets) over (partition by ds.student_id, dsub.subject
+								  order by dd.year, dd.month
+							  	  rows between 3 preceding and 1 preceding) as avg_sheets_3
+		, stddev(total_sheets) over (partition by ds.student_id, dsub.subject
+									 order by dd.year, dd.month
+							  	     rows between 3 preceding and 1 preceding) as stddev_sheets_3
+	FROM fact_student_monthly_performance f
+	JOIN dim_date dd on dd.sk_date = f.sk_date
+	JOIN dim_student ds on ds.sk_student = f.sk_student
+	JOIN dim_subject dsub on dsub.sk_subject = f.sk_subject
+)
+
 SELECT
 	f.fact_id
 	, dd.date_id
@@ -59,8 +78,7 @@ SELECT
 	, advanced_flag
 	, scholarship_flag
 	, dsub.subject
-	, trim(leading 'mpij' from stage_id)::int as stage_number
-	, stage_name
+ 	, stage_name
 	, grade_name
 	
 -- Measurements
@@ -68,22 +86,22 @@ SELECT
 	, current_lesson
 	, total_sheets
 	
-	-- How many stages until advanced 
-	, case 
-		when dsub.subject = 'japanese' then null
-	    else grade_id::int - stage_grade
-	  end as stages_to_adv
-	
 	-- Global block number							  
 	, (((substr(stage_id, 2)::int-1)*200 + current_lesson)/10) as progress_point
 	
 	-- Course completion %
     , round((((substr(stage_id, 2)::int-1)*200 + current_lesson)/10 ) / max_progress_point::decimal * 100, 2) as progress_pct
 
-	-- Average number of sheets for the last 3 months
-	, round(avg(total_sheets) over (partition by ds.student_id, dsub.subject
-									order by dd.year, dd.month
-							  	    rows between 3 preceding and 1 preceding)) as avg_total_sheets_3
+	-- Months since enrollment
+	, count(f.fact_id) over (partition by ds.student_id, dsub.subject
+			      			 order by dd.year, dd.month
+						     rows between unbounded preceding and current row) as months_enrolled
+	
+	-- How many stages until advanced 
+	, case 
+		when dsub.subject = 'japanese' then null
+	    else grade_id::int - stage_grade
+	  end as stages_to_adv
 
 	-- Real progress comparing with the previous month (binary)
 	, case 
@@ -91,9 +109,35 @@ SELECT
 		else 0
 	  end as is_stalled
 
+	-- Average number of sheets for the last 3 months
+	, round(avg_sheets_3) as avg_sheets_3
+
+	-- Coefficient of variation (stddev/average) of the number of sheets in last 3 months
+	, case 
+		when 
+			status_name in ('new', 'new_former', 'new_transfer') then null
+		when 
+			avg_sheets_3 = 0 then 10
+		else	
+			round(stddev_sheets_3 / avg_sheets_3, 2)
+	  end as cv_3
+	
 	-- Target
 	, status_name
-	
+	, case
+		when
+			status_name not in ('absent', 'absent_transfer', 'absent_graduate')
+			then null
+		when
+			status_name in ('absent', 'absent_transfer')
+			and advanced_flag = 0
+			and 
+				((dsub.subject = 'portuguese' and age_at_report < 9 and stage_grade <= 1)
+				  or 
+				 (dsub.subject in ('math', 'english', 'japanese') and stage_grade <=9))
+			then 1
+		else 0
+	  end as bad_churn
 FROM fact_student_monthly_performance f
 
 JOIN dim_date dd on dd.sk_date = f.sk_date
@@ -109,5 +153,6 @@ JOIN dim_status dstat on dstat.sk_status = f.sk_status
 JOIN stage_lengths sl on f.sk_subject = sl.sk_subject
 JOIN calculated_ages ca on f.fact_id = ca.fact_id
 JOIN lesson_differences ld on f.fact_id = ld.fact_id
+JOIN sheets_statistics ss on f.fact_id = ss.fact_id
 
 ORDER BY fact_id;
