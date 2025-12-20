@@ -1,103 +1,107 @@
-# Student Churn & Retention Analysis (Kumon Center)
+Student Churn Analysis | Kumon Center
 
-## Objective
+🇧🇷 Leia um resumo em Português | 🇺🇸 Jump to English Description
 
-This project analyzes historical student data from a Kumon center in Brazil to develop a machine learning model that predicts student churn. The primary goal is to provide actionable insights to stakeholders, helping them identify at-risk students and implement targeted retention strategies.
+<div id="resumo-executivo-pt"></div>
 
-## Data
+🇧🇷 Resumo Executivo
 
-The dataset consists of monthly performance reports for students from **February 2022** to **September 2025**. It includes:
+Este projeto analisa a evasão de alunos (churn) em uma unidade do Kumon, utilizando dados históricos reais. O objetivo é diferenciar saídas naturais (conclusão de curso) de saídas problemáticas ("Bad Churn") e identificar padrões comportamentais que antecedem a desistência.
+Stack: PostgreSQL (Engenharia de Features), Tableau (Dashboard Interativo) e Python (Modelagem Preditiva).
 
-**Student Profile**: Anonymized ID, age (from date of birth), date of enrollment, school grade, and subject (Math, English, Portuguese, Japanese).
+<div id="project-description"></div>
 
-**Academic Performance**: Current learning stage, specific lesson, pages completed, and a proficiency indicator ("advanced", which indicates whether the student is ahead of their school grade).
+1. Project Description
 
-**Monthly Status**: Status codes (ST1, ST2) indicating if the student is active, concluding, or temporarily absent.
+This project focuses on solving a critical business problem for an educational center: student retention. Using real-world data from a Kumon franchise, we aimed to move beyond simple churn rates and understand the quality of student exits.
 
-## Key Business Questions
+The solution was built using a hybrid architecture:
 
-This analysis focuses on answering the following questions:
+Data Engineering (SQL): Construction of a Star Schema and complex feature engineering (Window Functions) to create a robust Analytical Base Table (ABT).
 
-**Churn Definition**: What differentiates a "good" churn (e.g., course completion) from a "bad" one (e.g., premature dropout)?
+Visual Analytics (Tableau): An interactive dashboard to monitor retention trends and student profiles.
 
-**Prediction**: How likely is a given student to churn in the next month?
+Predictive Modeling (Python): A machine learning model to predict the probability of "Bad Churn" for active students.
 
-**Diagnosis**: What are the key drivers and most significant factors that lead to churn?
+2. Business Questions
 
-**Actionable Insights**: What interventions can be suggested for specific high-risk students?
+The analysis is driven by five key strategic questions:
 
-**Strategy**: What general policies could be implemented to improve overall student retention?
+Overview: What is the real scale of the churn problem? Is it seasonal?
 
-## Project Workflow
+Target Definition: How can we algorithmically differentiate a "Natural Churn" (e.g., a student graduating) from a "Bad Churn" (premature dropout)?
 
-This project follows a comprehensive data science pipeline, from data ingestion to model deployment.
+Performance Correlation: Do students leave because they are struggling? How does consistency impact retention?
 
-**1. Data Cleaning & Preparation:**
+Profiling: Are specific demographics (e.g., adults, early childhood) more prone to churn?
 
-- Handle duplicates, missing values (imputation), and outliers.
+Prediction: Can we flag at-risk students before they leave?
 
-- Crucially, decode proprietary status codes (ST1, ST2, Adiantado) into meaningful categories.
+3. Data Modeling & Engineering
 
-**2. Database Modeling & ETL (PostgreSQL):**
+The raw data was transformed into a Star Schema in PostgreSQL to ensure data integrity and query performance.
 
-- Design a Star Schema (Kimball methodology) with a central FatoHistoricoAluno table and dimensions like DimAluno, DimDisciplina, and DimData.
+Fact Table: fact_student_performance (Monthly snapshot of progress).
 
-- Build a Python script (SQLAlchemy) to perform the ETL process, loading the cleaned data into the PostgreSQL database.
+Dimensions: dim_student, dim_subject, dim_date, dim_grade.
 
-**3. Feature Engineering (SQL & Pandas):**
+To feed the BI and ML layers, an Analytical Base Table (ABT) was created using advanced SQL (Window Functions). This approach moved the "heavy lifting" to the database, ensuring consistency across reports.
 
-- Use SQL Window Functions during data extraction to create historical features efficiently (e.g., LAG(LicaoAtual), AVG(FolhasUtilizadas) over 3 months, COUNT(MesesNoEstagio)).
+4. Feature Rationale
 
-- Use Pandas to engineer more complex features (e.g., progress velocity, performance consistency).
+Instead of relying solely on raw metrics (e.g., "number of sheets"), we engineered features to capture student behavior:
 
-**4 Exploratory Data Analysis (EDA):**
+Feature
 
-- Define churn operationally (e.g., a student active in month M who does not appear in M+1 and is not 'Concluinte').
+Rationale
 
-- Analyze and profile different churn segments ("Good Churn" vs. "Bad Churn").
+bad_churn (Target)
 
-- Visualize relationships between features and churn probability.
+A binary flag that identifies dropouts who left before reaching a significant milestone (e.g., Math Stage I), separating them from successful graduates.
 
-**5. Predictive Modeling (Scikit-learn):**
+consistency_cv
 
-- Target: Binary classification (Will churn = 1, Will not churn = 0) for the next month.
+The Coefficient of Variation ($\sigma/\mu$) of sheets completed in the last 3 months. Measures stability. High variation suggests erratic study habits.
 
-- Validation: Use TimeSeriesSplit cross-validation to respect the temporal nature of the data and prevent look-ahead bias.
+is_stalled
 
-- Models: Start with a Logistic Regression (baseline) and compare against Random Forest and XGBoost for performance and interpretability.
+A flag indicating if a student failed to advance to a new lesson for consecutive months, signaling learning plateaus.
 
-- Evaluation: Focus on AUC-ROC, Precision, and Recall for the minority (churn) class.
+stages_to_adv
 
-**6. Insights & Visualization (Power BI):**
+The distance between the student's current stage and the expected stage for their school grade. Measures the "gap" to the goal of being an advanced student.
 
-- Identify key churn drivers using model-agnostic methods (e.g., SHAP values).
+life_stage
 
-- Create an interactive Power BI dashboard to:
+Categorical binning of age (Early Childhood, Primary, Adult) to capture life-cycle specific risks.
 
-- List students currently at high risk of churning.
+5. EDA & Insights (Tableau)
 
-- Visualize the primary factors contributing to their risk.
+The exploratory analysis revealed that churn is not random. It is highly correlated with specific performance triggers.
 
-- Display overall retention KPIs.
+📊 [Click here to view the Interactive Dashboard on Tableau Public] (Insert Link Here)
 
-**7. Model Deployment (Azure):**
+Key Insights:
 
-- Save the final trained model (joblib).
+The "Silent" Stagnation: Students who stall (do not advance lessons) for 2+ months have a drastically higher probability of churning, even if they continue to submit homework.
 
-- Develop a serverless API using Azure Functions that takes a student's current features as a JSON input and returns their real-time churn probability.
+The Gap Trap: In Math, students who fall more than 2 stages behind their school grade level (stages_to_adv < -2) are the most vulnerable group.
 
-## 1. Data Cleaning & Preparation
+Bad Churn Dominance: Over 85% of dropouts in Math and Portuguese were categorized as "Bad Churn," confirming that the center is losing students who have not yet extracted the method's full value.
 
-## 2. Database Modeling & ETL (PostgreSQL)
+6. Predictive Model
 
-## 3. Feature Engineering (SQL & Pandas)
+A Random Forest Classifier was trained to predict the probability of bad_churn in the upcoming month.
 
-## 4. Exploratory Data Analysis (EDA)
+Target: bad_churn (1 = Risk, 0 = Safe/Natural Exit)
 
-## 5. Predictive Modeling
+Key Predictors: stalled_run, cv_3 (Consistency), and stages_to_adv.
 
-## 6. Insights & Visualization (Power BI)
+Performance:
 
-## 7. Model Deployment (Azure)
+Recall: [Insert %] (Prioritized metric to minimize false negatives).
 
+AUC-ROC: [Insert Score].
 
+Author: [Seu Nome]
+Portfolio Project
