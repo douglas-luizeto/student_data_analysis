@@ -1,5 +1,7 @@
 *.xlsx
 *.csv
+*.twb
+*.twbr
 .env
 /sql_queries
 /class_navi_data

@@ -46,11 +46,11 @@ stage_lengths as (
 		, student_id
 		, subject
 		, avg(total_sheets) over (partition by ds.student_id, dsub.subject
-									order by dd.year, dd.month
-							  	    rows between 3 preceding and 1 preceding) as avg_sheets_3
+								  order by dd.year, dd.month
+							  	  rows between 3 preceding and 1 preceding) as avg_sheets_3
 		, stddev(total_sheets) over (partition by ds.student_id, dsub.subject
-									order by dd.year, dd.month
-							  	    rows between 3 preceding and 1 preceding) as stddev_sheets_3
+									 order by dd.year, dd.month
+							  	     rows between 3 preceding and 1 preceding) as stddev_sheets_3
 	FROM fact_student_monthly_performance f
 	JOIN dim_date dd on dd.sk_date = f.sk_date
 	JOIN dim_student ds on ds.sk_student = f.sk_student
@@ -92,6 +92,11 @@ SELECT
 	-- Course completion %
     , round((((substr(stage_id, 2)::int-1)*200 + current_lesson)/10 ) / max_progress_point::decimal * 100, 2) as progress_pct
 
+	-- Months since enrollment
+	, count(f.fact_id) over (partition by ds.student_id, dsub.subject
+			      			 order by dd.year, dd.month
+						     rows between unbounded preceding and current row) as months_enrolled
+	
 	-- How many stages until advanced 
 	, case 
 		when dsub.subject = 'japanese' then null
@@ -105,7 +110,7 @@ SELECT
 	  end as is_stalled
 
 	-- Average number of sheets for the last 3 months
-	, round(avg_sheets_3)
+	, round(avg_sheets_3) as avg_sheets_3
 
 	-- Coefficient of variation (stddev/average) of the number of sheets in last 3 months
 	, case 
