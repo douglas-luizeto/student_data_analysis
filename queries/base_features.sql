@@ -130,11 +130,19 @@ SELECT
 			then null
 		when
 			status_name in ('absent', 'absent_transfer')
+			-- not advanced cutoff
 			and advanced_flag = 0
 			and 
+			    -- literacy cutoff
 				((dsub.subject = 'portuguese' and age_at_report < 9 and stage_grade <= 1)
-				  or 
-				 (dsub.subject in ('math', 'english', 'japanese') and stage_grade <=9))
+				  or
+				-- middle school cutoff
+				 (dsub.subject = 'portuguese' and age_at_report >= 9 and stage_grade <= 9)
+				  or
+				 (dsub.subject in ('math', 'english') and stage_grade <=9))
+				  or
+				-- intermediate level cutoff
+				 (dsub.subject in ('japanese') and stage_name not in ('J', 'K', 'L'))
 			then 1
 		else 0
 	  end as bad_churn
