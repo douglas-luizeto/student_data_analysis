@@ -26,11 +26,15 @@ stage_lengths as (
 		, month
 		, student_id
 		, subject
-		, 200* trim(leading 'mpij' from stage_id)::int - 
-	      200* (lag(trim(leading 'mpij' from stage_id)::int, 1, 0)
-	            over (partition by student_id, subject order by year, month)) + 
-	      current_lesson - 
-	      (lag(current_lesson, 1, 0) over (partition by student_id, subject order by year, month)) as lesson_delta
+		, 200* (lag(trim(leading 'mpij' from stage_id)::int, 1, 0) over (partition by student_id, subject order by year, month)) - 
+	      200* (lag(trim(leading 'mpij' from stage_id)::int, 2, 0) over (partition by student_id, subject order by year, month)) + 
+	      (lag(current_lesson, 1, 0) over (partition by student_id, subject order by year, month)) - 
+	      (lag(current_lesson, 2, 0) over (partition by student_id, subject order by year, month)) as lesson_delta
+		-- , 200* trim(leading 'mpij' from stage_id)::int - 
+	 --      200* (lag(trim(leading 'mpij' from stage_id)::int, 1, 0)
+	 --            over (partition by student_id, subject order by year, month)) + 
+	 --      current_lesson - 
+	 --      (lag(current_lesson, 1, 0) over (partition by student_id, subject order by year, month)) as lesson_delta
 	FROM fact_student_monthly_performance f
 	JOIN dim_date dd on dd.sk_date = f.sk_date
 	JOIN dim_student ds on ds.sk_student = f.sk_student
@@ -103,9 +107,9 @@ SELECT
 	    else grade_id::int - stage_grade
 	  end as stages_to_adv
 
-	-- Real progress comparing with the previous month (binary)
+	-- No progress in the previous month
 	, case 
-		when lesson_delta <= 0 then 1 
+		when lesson_delta <= 0 and status_name not in ('new', 'new_multi', 'new_former') then 1 
 		else 0
 	  end as is_stalled
 
@@ -162,5 +166,7 @@ JOIN stage_lengths sl on f.sk_subject = sl.sk_subject
 JOIN calculated_ages ca on f.fact_id = ca.fact_id
 JOIN lesson_differences ld on f.fact_id = ld.fact_id
 JOIN sheets_statistics ss on f.fact_id = ss.fact_id
+
+where status_name in ('absent', 'absent_graduate', 'absent_transfer')
 
 ORDER BY fact_id;
