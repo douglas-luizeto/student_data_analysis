@@ -1,3 +1,103 @@
+📊 Student Retention & Churn Analysis: A Data-Driven Case Study
+
+🇧🇷 Leia o Resumo Executivo em Português | 🇺🇸 Read the Executive Summary in English
+
+🇧🇷 Resumo Executivo <a name="resumo-executivo-pt-br"></a>
+
+Este projeto investiga a dinâmica de retenção de alunos de uma unidade Kumon entre Fevereiro de 2022 e Setembro de 2025. A análise identifica que a unidade enfrenta uma "Erosão de Base", onde a saída de alunos antigos (Legacy) não está sendo compensada pela retenção de novos alunos (Orgânicos).
+
+Principais Descobertas:
+
+Mortalidade Infantil: 52% dos novos alunos desistem nos primeiros 6 meses.
+
+Gargalo Pedagógico: Matemática representa 49% do "Bad Churn", com risco crítico na transição para a adolescência (11-15 anos).
+
+A "Bala de Prata": 75% da evasão em Matemática ocorre em alunos que estão mais de 2,5 estágios atrás de sua série escolar. O "gap" pedagógico é o maior preditor de desmotivação.
+
+Paradoxo da Consistência: Alunos prestes a desistir apresentam uma estabilidade mecânica ("Inércia"), enquanto alunos estáveis variam mais o ritmo devido aos desafios reais do material.
+
+Recomendações: Gestão agressiva de expectativas no onboarding, intervenção obrigatória no 4º mês de matrícula e monitoramento de alunos com baixa variabilidade de desempenho (CV3).
+
+🎯 Project Overview <a name="executive-summary-en"></a>
+
+This project investigates the student retention dynamics of a Kumon Learning Center from February 2022 to September 2025. The goal is to identify the root causes of Bad Churn (premature dropout) and provide actionable strategic recommendations to stabilize the student base and ensure long-term growth.
+
+🛠️ Tech Stack & Methodology
+
+Data Engineering: PostgreSQL (Window Functions, CTEs, Feature Engineering).
+
+Data Visualization: Tableau (Cohort Analysis, Survival Curves, Performance Dashboards).
+
+Framework: Exploratory Data Analysis (EDA) based on Tukey’s principles, focusing on robust statistics (Medians, IQR, and Coefficient of Variation).
+
+📋 Executive Summary
+
+Part 1: The Global Problem - "Base Erosion"
+
+The center faces a critical challenge of student base erosion. Although it received 132 "Legacy" students via transfer in 2022 (a mature and stable group), the subsequent organic growth (223 enrollments) has not been sufficient to compensate for departures.
+
+Accumulated Churn: 69% (of which 55% is classified as Bad Churn).
+
+Infant Mortality: 52% of new organic students drop out within the first 6 months.
+
+Key Finding: The center is consuming its legacy capital without successfully maturing the new intake of students.
+
+Part 2: Demographic Profiling - "Who is leaving?"
+
+Primary Audience: 74% of the base consists of school-age children and teenagers.
+
+The Math and Literacy Bottlenecks: Mathematics accounts for 44% of all bad churn in the primary audience, while Portuguese accounts for 16% (considering only school-age children). 
+
+Pedagogical "Walls": Retention drops sharply at specific stages:
+
+Math: Stage B (Column Addition/Subtraction).
+
+Portuguese: Stage AI (Post-literacy). Students often leave once they learn to read, failing to perceive the value of advanced interpretation levels.
+
+Japanese: High risk during the initial literacy phase (Stages 4A-2A).
+
+Part 3: Velocity Analysis - "The 90-Day Window"
+
+A "Critical Leakage" occurs during the second quarter of enrollment.
+
+IC3 (3-Month Continuity): 81% average.
+
+IC9 (9-Month Continuity): Drops to 54%.
+
+Median Tenure: 5 to 7 months.
+
+Insight: The initial onboarding works, but the transition to "new content" (heavy study routine) fails to sustain engagement, resulting in a Lifetime Value (LTV) that is insufficient for profitability.
+
+Part 4: Causal Analysis - "The Silver Bullet"
+
+The Consistency Paradox: Bad churn in Math shows a lower CV3 (0.39) than natural churn (0.71). This indicates "Inertia Stability"—students study mechanically without being challenged until they eventually quit.
+
+Reactive Churn: 91% of dropouts leave before completing 6 months of stagnation. They don't stay long enough to be "bored"; they quit reactively at the first sign of increased difficulty.
+
+The Silver Bullet (Distance to Advanced): 75% of bad churn in Math occurs in students who are more than 2.5 stages behind their school grade level. The pedagogical gap is the primary driver of demotivation.
+
+💡 Strategic Recommendations
+
+Expectation Management (Gap Focus): Implement a "Victory Line" visual schedule for students with a school gap > 2.5 stages to celebrate immediate progress.
+
+Month 4 Intervention: Mandatory feedback session for all organic students at the 4-month mark to address the "Critical Leakage" identified.
+
+"Suspicious Consistency" Alert: Monitor students with very low CV3 (< 0.40). Lack of variance in early stages is a red flag for latent disengagement.
+
+Pedagogical "Wall" Protocol: Extra support and adjusted workload when entering Math Stages B and E, and Portuguese Stage AI.
+
+Post-Literacy Marketing (Portuguese): Internal campaign highlighting the benefits of "Fluency and Interpretation" once basic literacy is achieved.
+
+Japanese Engagement: Weekly celebratory feedback for beginners (4A-2A) to mitigate the high cognitive cost of learning new scripts.
+
+🚧 Current Status
+
+The project is currently transitioning from Data Engineering & Diagnosis to the Visualization Phase. Future work includes building interactive Tableau dashboards to support these findings.
+
+Developed as part of the "Student Data Analysis" Project
+
+------------------------------------------
+
 Student Churn Analysis | Kumon Center
 
 🇧🇷 Leia um resumo em Português | 🇺🇸 Jump to English Description
